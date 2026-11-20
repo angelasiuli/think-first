@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Think First: an AI writing partner that won't write for you</title>
+<meta name="description" content="Write your own argument. The AI asks questions and pushes back, but never writes your essay.">
+<meta property="og:title" content="Think First">
+<meta property="og:description" content="An AI writing partner that helps you think, not write for you.">
+<link rel="icon" id="favicon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+Design notes:
+- White and one blue. The tool is for students mid-assignment; it should feel calm and familiar, like a good writing app.
+  Blue marks the one thing to do next (primary button, current step). Amber appears only when the AI's reply was hidden.
+- Inter for legibility in a UI with many small labels.
+- Copy is short and plain: a student should understand each screen without reading a paragraph.
+-->
+<style>
+:root{
+  --bg:#ffffff; --soft:#f6f7f9; --line:#e4e7ec; --text:#101828; --text-2:#475467; --muted:#667085;
+  --blue:#2050d6; --blue-hover:#1a43b5; --blue-soft:#eef3ff; --amber:#9a5b00; --amber-soft:#fff6e5; --amber-line:#f5d9a8;
+  --radius:10px; color-scheme: light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.55 Inter, "Segoe UI", system-ui, sans-serif;-webkit-text-size-adjust:100%}
+a{color:var(--blue)}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed}
+:focus-visible{outline:3px solid #9db5f5;outline-offset:2px}
+.wrap{max-width:880px;margin:0 auto;padding:0 16px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* top bar */
+.top{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:10}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;min-height:60px;gap:12px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;letter-spacing:-.01em;color:var(--text);text-decoration:none}
+.top nav{display:flex;align-items:center;gap:4px}
+.top nav a{color:var(--text-2);text-decoration:none;font-size:15px;padding:8px 10px;border-radius:8px}
+.top nav a:hover{background:var(--soft);color:var(--text)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:8px;font-weight:600;font-size:15px;border:1px solid transparent;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-hover)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-primary:disabled{background:#a9b8e6}
+.btn-line{background:#fff;color:var(--text);border-color:var(--line)}
+.btn-line:hover{background:var(--soft)}
+.btn-line:disabled{color:#98a2b3}
+.btn-sm{min-height:36px;padding:0 12px;font-size:14px}
+.textbtn{background:none;border:0;padding:0;color:var(--blue);font-weight:500;font-size:14px}
+.textbtn:hover{text-decoration:underline}
+
+/* hero */
+.hero{display:flex;flex-direction:column;align-items:center;gap:16px;padding:48px 0 40px;text-align:center}
+.hero .mascot{order:-1;width:88px;height:auto;aspect-ratio:82/83}
+.hero h1{font-size:42px;line-height:1.12;letter-spacing:-.025em;margin:0 auto 14px;max-width:16em;font-weight:700}
+.hero p{font-size:18px;color:var(--text-2);margin:0 auto;max-width:34em}
+
+/* app card */
+.app{scroll-margin-top:72px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.05);margin-bottom:72px;position:relative}
+.steps{border-radius:14px 14px 0 0;display:flex;border-bottom:1px solid var(--line);background:var(--soft);margin:0;padding:0;list-style:none}
+.steps li{flex:1}
+.steps li:first-child button{border-top-left-radius:13px}
+.steps li:last-child button{border-top-right-radius:13px}
+.steps button{width:100%;background:none;border:0;padding:14px 10px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-weight:500;font-size:15px;border-bottom:2px solid transparent}
+.steps button:not(:disabled):hover{color:var(--text)}
+.steps .num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:inline-grid;place-items:center;font-size:13px;font-weight:600;flex:none}
+.steps button[aria-current="step"]{color:var(--blue);border-bottom-color:var(--blue);background:#fff}
+.steps button[aria-current="step"] .num{background:var(--blue);border-color:var(--blue);color:#fff}
+.steps button.done .num{background:var(--text-2);border-color:var(--text-2);color:#fff}
+.steps button:disabled{opacity:.5}
+.pane{padding:28px}
+.pane h2{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+.pane .sub{color:var(--text-2);margin:0 0 22px}
+label{display:block;font-weight:600;font-size:14px;margin:0 0 6px}
+.opt{font-weight:400;color:var(--muted)}
+textarea,input[type=text],input[type=password]{width:100%;border:1px solid #d0d5dd;border-radius:8px;padding:10px 12px;background:#fff;line-height:1.5}
+textarea:hover,input:hover{border-color:#98a2b3}
+textarea:focus,input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px #dbe5ff}
+textarea{resize:vertical}
+.field{margin-bottom:18px}
+.help{font-size:14px;color:var(--muted);margin:6px 0 0}
+.err{font-size:14px;color:#b42318;margin:6px 0 0;min-height:1.3em}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lockline{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+
+.opinion{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;background:var(--blue-soft);border-radius:var(--radius);padding:12px 14px;margin:0 0 20px}
+.opinion small{display:block;font-size:12px;font-weight:600;color:var(--blue);margin-bottom:2px}
+.opinion p{margin:0;font-weight:500}
+
+/* chat */
+.chat{display:flex;flex-direction:column;gap:12px;margin:0 0 16px;padding:0;list-style:none}
+.bubble{max-width:85%;padding:10px 14px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.from-ai{align-self:flex-start;background:var(--soft);border-top-left-radius:4px}
+.from-you{align-self:flex-end;background:var(--blue);color:#fff;border-top-right-radius:4px}
+.who{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:2px}
+.from-you .who{color:#dbe5ff}
+.hidden-note{align-self:flex-start;max-width:85%;font-size:14px;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-line);border-radius:8px;padding:8px 12px}
+.composer{display:flex;gap:10px;align-items:flex-end}
+.composer textarea{flex:1;min-height:48px}
+.thinking{font-size:14px;color:var(--muted);min-height:1.4em;margin:0 0 8px}
+.box{border:1px solid var(--line);background:var(--soft);border-radius:var(--radius);padding:16px;margin:0 0 16px}
+.box strong{display:block;margin-bottom:4px}
+.box p{margin:0 0 12px;color:var(--text-2);font-size:15px}
+
+/* editor */
+.editor{border:1px solid #d0d5dd;border-radius:var(--radius);overflow:hidden}
+.editor:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px #dbe5ff}
+#draft{border:0;border-radius:0;min-height:300px;padding:16px;font-size:17px;line-height:1.7;box-shadow:none}
+.meter{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding:10px 14px;background:var(--soft);font-size:14px;color:var(--text-2);flex-wrap:wrap}
+.meter b{color:var(--text)}
+.track{flex:1 1 120px;height:6px;border-radius:3px;background:#dfe3ea;overflow:hidden;min-width:100px}
+.fill{height:100%;background:var(--blue);width:0}
+.feedback{margin-top:20px}
+.fb{border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px}
+.fb q{display:block;color:var(--muted);font-size:14px;margin-bottom:6px;quotes:"“" "”"}
+.fb.hid{border-color:var(--amber-line);background:var(--amber-soft);color:var(--amber)}
+
+/* how it works + faq */
+section.info{padding:0 0 64px}
+section.info h2{font-size:26px;letter-spacing:-.015em;margin:0 0 20px}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:0;padding:0;list-style:none}
+.how b{display:block;font-size:17px;margin:6px 0 4px}
+.how p{margin:0;color:var(--text-2)}
+.how .n{font-size:14px;font-weight:600;color:var(--blue)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq details:first-of-type{border-top:1px solid var(--line)}
+.faq summary{cursor:pointer;list-style:none;padding:16px 32px 16px 0;font-weight:600;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:4px;top:12px;font-size:22px;font-weight:400;color:var(--muted)}
+.faq details[open] summary::after{content:"−"}
+.faq summary:hover{color:var(--blue)}
+.faq details p{margin:0 0 16px;color:var(--text-2);max-width:42em}
+
+footer{border-top:1px solid var(--line);padding:24px 0 40px;font-size:14px;color:var(--muted)}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* dialogs */
+dialog{border:0;border-radius:14px;padding:24px;max-width:520px;width:calc(100% - 32px);box-shadow:0 20px 50px rgba(16,24,40,.25)}
+dialog::backdrop{background:rgba(16,24,40,.45)}
+dialog h2{margin:0 0 4px;font-size:20px}
+.choice{border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:14px 0}
+.choice h3{margin:0 0 4px;font-size:16px}
+.choice p{margin:0 0 10px;font-size:14px;color:var(--text-2)}
+.status{font-size:14px;font-weight:500}
+.status.ok{color:#067647}
+progress{width:100%;margin-top:8px}
+.verdict{margin-top:10px;padding:10px 12px;border-radius:8px;background:#ecfdf3;color:#067647;font-size:14px}
+.verdict.no{background:var(--amber-soft);color:var(--amber)}
+
+/* mascot: a blue owl reading a book. It moves only when something happens:
+   hops once on arrival, looks down at its book and bobs while the AI is thinking,
+   shakes its head when a reply is hidden, blinks on hover. */
+.mascot{display:block;overflow:visible}
+.mascot .m-body,.mascot .m-eyes{transform-box:fill-box}
+.mascot .m-body{transform-origin:50% 100%}
+.mascot .m-eyes{transform-origin:center}
+.mascot .m-pupils{transition:transform .3s ease}
+.logo{width:26px;height:auto;aspect-ratio:80/73}
+.mascot.hop .m-body{animation:hop .7s cubic-bezier(.3,1.5,.5,1) .3s 1 both}
+.mascot.hop .m-eyes{animation:blink .3s ease 1.3s 1}
+.mascot.think .m-body{animation:bob 1.2s ease-in-out infinite}
+.mascot.think .m-pupils{transform:translateY(3.5px)}
+.mascot.no .m-body{animation:shake .5s ease-in-out 1}
+.mascot:hover .m-eyes{animation:blink .3s ease 1}
+@keyframes hop{0%{transform:translateY(0) scale(1)}25%{transform:translateY(0) scale(1.05,.94)}55%{transform:translateY(-12%) scale(.97,1.03)}100%{transform:translateY(0) scale(1)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3%)}}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}55%{transform:rotate(7deg)}80%{transform:rotate(-3deg)}}
+@keyframes blink{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.1)}}
+.ai-row{display:flex;gap:10px;align-items:flex-start;max-width:90%}
+.ai-row .mascot{width:30px;height:auto;aspect-ratio:80/73;flex:none;margin-top:2px}
+.ai-row .bubble{max-width:none}
+.thinking{display:flex;align-items:center;gap:8px}
+.thinking .mascot{width:26px;height:auto;aspect-ratio:80/73}
+
+.explore{margin:-4px 0 18px}
+.explore-out{margin-top:10px;background:var(--blue-soft);border-radius:var(--radius);padding:12px 14px;font-size:15px}
+.explore-out strong{display:block;font-size:13px;color:var(--blue);margin-bottom:4px}
+.ai-list{margin:4px 0 0;padding-left:20px}
+.ai-list li{margin:2px 0}
+.bubble .ai-list{white-space:normal}
+.notes{margin:0 0 16px}
+.notes summary{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;cursor:pointer;padding:4px 0;list-style:none}
+.notes summary::-webkit-details-marker{display:none}
+.notes summary::after{content:"";width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+.notes[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+.notes .count{font-size:12px;font-weight:600;color:var(--blue);background:var(--blue-soft);border-radius:10px;padding:1px 8px}
+.nlist{display:flex;gap:10px;overflow-x:auto;padding:8px 2px 6px;scroll-snap-type:x mandatory}
+.note{flex:0 0 240px;scroll-snap-align:start;display:flex;flex-direction:column;background:var(--soft);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;font-size:14px}
+.note .q{color:var(--muted);font-size:12px;margin:0 0 4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.note p{margin:0 0 8px;flex:1}
+.note .textbtn{align-self:flex-start}
+.notes-empty{font-size:14px;color:var(--muted);margin:6px 0 0}
+.fb.hint{background:var(--blue-soft);border-color:#d5e0ff}
+.fb .label{display:block;font-size:12px;font-weight:600;color:var(--blue);margin-bottom:4px}
+.row-between{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:14px}
+
+@media (max-width:640px){
+  .hero{padding:28px 0 32px;gap:12px}
+  .hero .mascot{width:76px}
+  .hero h1{font-size:30px}
+  .hero p{font-size:16px}
+  .top nav a.hide-sm{display:none}
+  .pane{padding:20px 16px}
+  .steps button{flex-direction:column;gap:4px;padding:10px 4px;font-size:13px}
+  .how{grid-template-columns:1fr;gap:18px}
+  .bubble,.hidden-note{max-width:95%}
+  .composer{flex-direction:column;align-items:stretch}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#start"><span id="navMascot"></span>Think First</a>
+    <nav aria-label="Main">
+      <a href="#how" class="hide-sm">How it works</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="hero" id="start">
+      <div>
+        <h1>The AI that helps you think, not write for you</h1>
+        <p>Write down your opinion, let the AI challenge it, then write the essay yourself. It asks questions. It never writes your essay.</p>
+      </div>
+      <span id="heroOwl"></span>
+    </div>
+
+    <div class="app">
+      <ol class="steps" aria-label="Steps">
+        <li><button type="button" data-go="1"><span class="num">1</span>Your opinion</button></li>
+        <li><button type="button" data-go="2" disabled><span class="num">2</span>Get challenged</button></li>
+        <li><button type="button" data-go="3" disabled><span class="num">3</span>Write</button></li>
+      </ol>
+
+      <!-- Step 1 -->
+      <div class="pane" id="p1">
+        <h2>What do you think?</h2>
+        <p class="sub">Write your opinion in one sentence. It has to come from you, so the AI won't give you one.</p>
+        <form id="f1" novalidate>
+          <div class="field">
+            <label for="topic">Essay question <span class="opt">(optional)</span></label>
+            <input type="text" id="topic" placeholder="e.g. Should schools ban phones in class?">
+          </div>
+          <div class="field">
+            <label for="op">Your opinion</label>
+            <textarea id="op" rows="2" placeholder="e.g. Schools should ban phones in class because they break concentration." aria-describedby="opErr"></textarea>
+            <p class="err" id="opErr" role="alert"></p>
+            <div class="explore">
+              <button type="button" class="textbtn" id="exploreBtn">Not sure what you think? Get questions to explore</button>
+              <div id="exploreOut" aria-live="polite"></div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Continue</button>
+            <span class="lockline"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>The AI starts arguing after this step.</span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="pane" id="p2" hidden>
+        <h2>Defend your opinion</h2>
+        <p class="sub">The AI asks questions and argues back. Answer in your own words.</p>
+        <div data-opinion></div>
+        <div class="box" id="noAi" hidden>
+          <strong id="noAiTitle">The AI isn't ready on this computer</strong>
+          <p id="noAiText">You can still write your essay without it.</p>
+          <progress id="devProg" max="1" value="0" hidden></progress>
+          <div class="actions"><button type="button" class="btn btn-primary btn-sm" id="devBtn" hidden>Turn on the AI (one-time download)</button><button type="button" class="btn btn-line btn-sm" data-go="3">Skip to writing</button></div>
+        </div>
+        <ol class="chat" id="chat" aria-live="polite"></ol>
+        <p class="thinking" id="thinking" aria-live="polite"></p>
+        <form id="f2" novalidate>
+          <label for="ans" class="sr">Your reply</label>
+          <div class="composer">
+            <textarea id="ans" rows="2" placeholder="Type your reply…"></textarea>
+            <button class="btn btn-primary" type="submit" id="send">Send</button>
+          </div>
+          <p class="help">Press Enter to send. Shift+Enter starts a new line.</p>
+          <p class="err" id="ansErr" role="alert"></p>
+        </form>
+        <div class="row-between"><button type="button" class="btn btn-line" id="stuck2">I'm stuck</button><button type="button" class="btn btn-line" data-go="3">I'm ready to write</button></div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="pane" id="p3" hidden>
+        <h2>Write your essay</h2>
+        <p class="sub">Only you can type here. Start from the ideas you already gave in step 2.</p>
+        <div data-opinion></div>
+        <details class="notes" id="notes" open>
+          <summary>Your ideas so far <span class="count" id="nCount"></span></summary>
+          <div class="nlist" id="nlist"></div>
+        </details>
+        <div class="editor">
+          <label for="draft" class="sr">Your essay</label>
+          <textarea id="draft" placeholder="Start with your opinion, in your own words…"></textarea>
+          <div class="meter">
+            <span><b id="pct">–</b> written by you</span>
+            <div class="track" role="img" id="bar" aria-label="Written by you: no text yet"><div class="fill" id="fill"></div></div>
+            <span id="wc">0 words</span>
+          </div>
+        </div>
+        <div class="row-between">
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="askFb" disabled>Get feedback on highlighted text</button>
+            <button type="button" class="btn btn-line" id="stuck3">I'm stuck</button>
+          </div>
+        </div>
+        <p class="help" id="fbHint">Highlight a sentence you wrote to get feedback on it.</p>
+        <p class="thinking" id="fbThinking" aria-live="polite" style="margin-top:10px"></p>
+        <div class="feedback" id="fbWrap" hidden><h3 style="font-size:16px;margin:0 0 10px">Feedback</h3><div id="fbList"></div></div>
+        <div class="row-between" style="border-top:1px solid var(--line);padding-top:16px;margin-top:24px">
+          <button type="button" class="btn btn-line" id="download">Download my essay</button>
+          <button type="button" class="textbtn" id="restart">Start a new essay</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="info" id="how" aria-labelledby="howH">
+    <div class="wrap">
+      <h2 id="howH">How it works</h2>
+      <ol class="how">
+        <li><span class="n">Step 1</span><b>You decide first</b><p>You write your opinion before the AI says anything, so the idea starts with you.</p></li>
+        <li><span class="n">Step 2</span><b>The AI pushes back</b><p>It asks one question at a time and gives the other side, like a debate partner.</p></li>
+        <li><span class="n">Step 3</span><b>You write it</b><p>You write the essay. The AI can comment on your sentences but can't write them.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="info faq" id="faq" aria-labelledby="faqH">
+    <div class="wrap">
+      <h2 id="faqH">Questions</h2>
+      <details><summary>What is this for?</summary><p>For students writing an argument essay. Most AI tools will write the essay if you ask. This one helps you work out what you think and defend it, which is the skill an essay is meant to build.</p></details>
+      <details><summary>Why does it matter who does the thinking?</summary><p>Forming your own view and defending it is how you learn to make decisions and lead. In a study of 77 students writing essays, almost half of those who used AI asked it for help before typing a single word. The more of the essay the AI wrote, the less the students felt the essay was theirs.</p></details>
+      <details><summary>Why do I have to write my opinion first?</summary><p>Once you read an AI's answer, it's hard to think of your own. Writing one sentence first means the starting idea is yours, and the AI's job becomes testing that idea.</p></details>
+      <details><summary>What if I ask it to write my essay?</summary><p>It says no and asks you a question instead. A second check in the code also hides any reply that looks like essay text, so even a clever request won't get you a ready-made essay.</p></details>
+      <details><summary>What does "written by you" mean?</summary><p>It's the share of your essay that you typed here. Text you paste in from somewhere else lowers it. It isn't a grade. It just shows how much of the essay is yours.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Think First · research prototype, GSLS 2026</span>
+    <a href="#research" id="resLink">For researchers</a>
+  </div>
+</footer>
+
+<dialog id="research" aria-labelledby="resH">
+  <h2 id="resH">Research tools</h2>
+  <p class="help" style="margin:0 0 12px">For the report's evaluation. Paste any AI reply to see whether the code check would hide it.</p>
+  <label for="rIn">AI reply</label>
+  <textarea id="rIn" rows="6"></textarea>
+  <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:10px"><input type="checkbox" id="rStep3"> Check as feedback on the current essay</label>
+  <div id="rOut"></div>
+  <p class="help" id="thr"></p>
+  <div class="actions" style="justify-content:space-between;margin-top:12px">
+    <span><button type="button" class="btn btn-line btn-sm" id="copyInstr">Copy the AI's instructions</button> <button type="button" class="btn btn-line btn-sm" id="recordBtn">Download record (.json)</button></span>
+    <span><button type="button" class="btn btn-line btn-sm" id="closeRes">Close</button> <button type="button" class="btn btn-primary btn-sm" id="rRun">Check</button></span>
+  </div>
+  <p class="help" id="copyMsg" aria-live="polite"></p>
+  <div class="choice">
+    <h3>AI connection</h3>
+    <p class="status" id="aiStatus">Checking…</p>
+    <p>For testing only: a personal Gemini key (from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>) saved in this browser.</p>
+    <label for="keyIn" class="sr">Gemini API key</label>
+    <div class="composer"><input type="password" id="keyIn" autocomplete="off" spellcheck="false" placeholder="Paste a key"><button type="button" class="btn btn-line btn-sm" id="saveKey">Save key</button></div>
+  </div>
+</dialog>
+
+<script>
+// GUARD-START  (Layer 2: deterministic check, independent of the model. Also loaded by guard_test.mjs)
+const GUARD = {
+  maxDeclRun: 4,        // this many declarative sentences in a row ...
+  maxDeclRunWords: 40,  // ... totalling at least this many words, is held back
+  maxParaWords: 50,     // a single paragraph without a question this long is held back
+  maxFullBullets: 3,    // this many bullet lines that are full sentences (8+ words) is an outline
+  maxQuoteWords: 8,     // quoted wording this long that is not from the student's own text
+  rewriteSim: 0.6       // Stage 3: a sentence this similar to the student's, but changed, is a rewrite
+};
+const MARKERS = [
+  [/\bhere(?:'s| is| are)\s+(?:an?|the|your|my|one|some)?\s*(?:possible\s+|sample\s+|revised\s+|rewritten\s+|improved\s+|stronger\s+|full\s+|short\s+|complete\s+)?(?:essay|draft|paragraph|paragraphs|introduction|intro|conclusion|thesis|outline|version|opening|body)/i, "offers drafted text"],
+  [/^\s*(?:#{1,6}\s+\S|\*\*\s*(?:title|introduction|conclusion|body)|(?:title|thesis(?: statement)?|introduction|conclusion|body paragraph(?: \d)?|paragraph \d|hook|topic sentence)\s*:)/im, "essay formatting"],
+  [/\bin conclusion,/i, "essay formatting"],
+  [/^\s*(?:revised|rewrite|rewritten|improved|better|suggested|try this|alternative)(?: version| sentence| wording)?\s*:/im, "replacement wording"],
+  [/\b(?:you could (?:write|say)|try writing|consider writing)\s*:?\s*["“]/i, "replacement wording"]
+];
+function words(s){ return (s.match(/[A-Za-z0-9'’-]+/g) || []); }
+function sentences(par){ return par.split(/(?<=[.!?])["”')\]]*\s+(?=["“'(\[]?[A-Z0-9])/).map(s => s.trim()).filter(Boolean); }
+function jaccard(a, b){
+  const A = new Set(words(a.toLowerCase())), B = new Set(words(b.toLowerCase()));
+  if (!A.size || !B.size) return 0; let i = 0; A.forEach(w => { if (B.has(w)) i++; });
+  return i / (A.size + B.size - i);
+}
+function guardCheck(reply, opts = {}){
+  const reasons = [];
+  const text = String(reply || "").replace(/\r/g, "");
+  for (const [re, why] of MARKERS) if (re.test(text) && !reasons.includes(why)) reasons.push(why);
+  const lines = text.split("\n");
+  const bullets = lines.filter(l => /^\s*(?:[-*•]|\d+[.)])\s+/.test(l)).map(l => l.replace(/^\s*(?:[-*•]|\d+[.)])\s+/, ""));
+  const fullBullets = bullets.filter(b => !/\?\s*$/.test(b) && words(b).length >= 8).length;
+  if (fullBullets >= GUARD.maxFullBullets) reasons.push(`${fullBullets} full-sentence bullet points`);
+  const paras = text.split(/\n\s*\n|\n(?=\s*(?:[-*•]|\d+[.)])\s)/).map(p => p.replace(/\s*\n\s*/g, " ").trim()).filter(Boolean);
+  let run = 0, runWords = 0, worstRun = 0, worstWords = 0;
+  for (const p of paras){
+    const isBullet = /^(?:[-*•]|\d+[.)])\s+/.test(p);
+    const pw = words(p).length;
+    if (!isBullet && !p.includes("?") && pw >= GUARD.maxParaWords) reasons.push(`${pw}-word paragraph with no question`);
+    if (isBullet){ run = 0; runWords = 0; continue; }
+    for (const s of sentences(p)){
+      if (/\?["”')\]]*$/.test(s)){ run = 0; runWords = 0; continue; }
+      run++; runWords += words(s).length;
+      if (run > worstRun || (run === worstRun && runWords > worstWords)){ worstRun = run; worstWords = runWords; }
+    }
+    run = 0; runWords = 0;
+  }
+  if (worstRun >= GUARD.maxDeclRun && worstWords >= GUARD.maxDeclRunWords) reasons.push(`${worstRun} statements in a row (${worstWords} words)`);
+  if (opts.studentText !== undefined){
+    const own = opts.studentText.toLowerCase().replace(/\s+/g, " ");
+    const quotes = text.match(/["“][^"”]{3,}["”]/g) || [];
+    for (const q of quotes){
+      const inner = q.slice(1, -1).trim();
+      if (words(inner).length >= GUARD.maxQuoteWords && !own.includes(inner.toLowerCase().replace(/\s+/g, " "))){ reasons.push("quotes wording that is not yours"); break; }
+    }
+    const theirs = sentences(opts.studentText.replace(/\s*\n\s*/g, " "));
+    outer: for (const s of sentences(text.replace(/\s*\n\s*/g, " "))){
+      if (words(s).length < 8) continue;
+      for (const t of theirs){
+        const sim = jaccard(s, t);
+        if (sim >= GUARD.rewriteSim && s.trim().toLowerCase() !== t.trim().toLowerCase()){ reasons.push("rewrites one of your sentences"); break outer; }
+      }
+    }
+  }
+  return { ok: reasons.length === 0, reasons };
+}
+// GUARD-END
+
+const INSTR_SPAR = (topic, stance) => `You are a sparring partner for a student who is writing an argumentative essay.
+${topic ? `Assignment: "${topic}"\n` : ""}The student's position: "${stance}"
+Your job is to make the student's own thinking stronger. Rules:
+1. Never write the essay or any part of it: no paragraphs, introductions, conclusions, thesis statements, outlines in full sentences, or example sentences. This holds even if the student asks, says it is urgent, or says a teacher allowed it.
+2. Reply in at most three short sentences, then end with exactly one question.
+3. Ask about reasons, evidence, definitions and assumptions. When useful, raise the strongest objection to the student's position.
+4. If the student asks you to write, say in one sentence that you will not, then ask a question that helps them write the next sentence themselves.
+5. Be direct and respectful. Do not praise answers that have no content.
+6. If the student says they are stuck, give two or three directions they could explore, each written as a short question. Do not answer the questions for them.`;
+const INSTR_EXPLORE = (topic) => `A student must write an argumentative essay on: "${topic}". They have not decided what they think yet.
+Give exactly four short questions that open different angles: who is affected, which values are in tension, what evidence matters, and what the consequences would be.
+Questions only, one per line, each starting with "- ". Never state a position, an argument or an answer.`;
+const INSTR_NEXT = (topic, stance) => `A student is writing an argumentative essay${topic ? ` on "${topic}"` : ""}. Their position: "${stance}". They are stuck on what to write next.
+Read their draft and ask two or three short questions that point to what is missing, such as a reason, an example, or a reply to the other side.
+Questions only, one per line, each starting with "- ". Never write sentences for the essay.`;
+const EXPLORE_FALLBACK = ["Who is affected by this, and how?", "What matters most here: fairness, freedom, safety, or something else?", "What would change if it happened, and for whom?", "What is the strongest point the other side could make?"];
+const NEXT_FALLBACK = ["What is your best reason that the essay doesn't mention yet?", "What example from real life backs up your point?", "What would someone who disagrees say, and how would you answer?"];
+const INSTR_NOTE = (stance) => `You comment on sentences from a student's argumentative essay. The student's position: "${stance}"
+Rules: give at most two short observations about reasoning, evidence or clarity. Never rewrite the sentences, never offer replacement wording, never quote new wording. End with one question that helps the student revise it themselves.`;
+const FALLBACK_Q = [
+  () => `What's the strongest reason you have for this opinion?`,
+  () => `Who would disagree with you, and what would they say first?`,
+  () => `What evidence would convince someone who doubts you? Name one example.`,
+  () => `Which word in your opinion needs a clearer meaning?`,
+  () => `What would have to be true for your opinion to be wrong?`
+];
+
+const KEY = "tf-record-v2", CFG = "tf-ai-v2";
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const S = Object.assign({ topic: "", stance: "", stances: [], chat: [], draft: "", prov: "", notes: [], step: 1 }, store.get(KEY, {}));
+const cfg = Object.assign({ key: "", model: "gemini-2.5-flash" }, store.get(CFG, {}));
+const save = () => store.set(KEY, S);
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const now = () => new Date().toISOString();
+// AI text to safe HTML; lines starting with "-", "*" or "•" become a list
+function fmt(text){
+  const lines = String(text).trim().split(/\n+/), out = []; let list = [];
+  const flush = () => { if (list.length){ out.push(`<ul class="ai-list">${list.map(l => `<li>${esc(l)}</li>`).join("")}</ul>`); list = []; } };
+  for (const l of lines){ const m = l.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/); if (m) list.push(m[1].replace(/\*\*/g, "")); else { flush(); out.push(esc(l.replace(/\*\*/g, ""))); } }
+  flush(); return out.join("<br>");
+}
+const listHTML = arr => `<ul class="ai-list">${arr.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`;
+
+// ---------- steps
+function go(n){
+  n = +n; if (n > 1 && !S.stance) n = 1;
+  S.step = n; save();
+  [1, 2, 3].forEach(i => { $("p" + i).hidden = i !== n; });
+  document.querySelectorAll(".steps button").forEach(b => {
+    const i = +b.dataset.go;
+    b.disabled = i > 1 && !S.stance;
+    b.classList.toggle("done", i < n && !!S.stance);
+    if (i === n) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+  });
+  renderOpinion();
+  if (n === 2) renderChat();
+  if (n === 3) renderDraft();
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-go]"); if (b && !b.disabled){ go(b.dataset.go); document.querySelector(".app").scrollIntoView({ block: "start" }); }
+});
+
+// ---------- mascot: a flat blue owl reading a book. One blue (soft gradient) plus white, rounded shapes.
+// mascot(cls, book): book=false gives the head only (logo and chat avatar).
+const OWL_DEFS = `<defs><linearGradient id="owlG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d48c8"/><stop offset="1" stop-color="#4a7bf0"/></linearGradient></defs>`;
+const OWL_HEAD = `<path d="M21 44 L15.5 21 Q14.5 16.5 19 18.5 L37 28 Q50 24.5 63 28 L81 18.5 Q85.5 16.5 84.5 21 L79 44 Q88 54 87 66 Q84 86 50 86 Q16 86 13 66 Q12 54 21 44 Z" fill="url(#owlG)"/>`;
+const OWL_FACE = `<g class="m-eyes"><circle cx="36" cy="52" r="12.5" fill="#fff"/><circle cx="64" cy="52" r="12.5" fill="#fff"/>
+<g class="m-pupils"><ellipse cx="37.5" cy="53" rx="5" ry="7" fill="#2a5be0"/><ellipse cx="62.5" cy="53" rx="5" ry="7" fill="#2a5be0"/></g></g>
+<path d="M46.5 66 Q50 64 53.5 66 L50.8 71.5 Q50 72.6 49.2 71.5 Z" fill="#fff"/>`;
+const OWL_BOOK = `<g class="m-book"><path d="M22 80 Q36 73 50 79 Q64 73 78 80 L78 95 Q64 88 50 94 Q36 88 22 95 Z" fill="#fff" stroke="#2a5be0" stroke-width="3" stroke-linejoin="round"/>
+<path d="M50 79 V94" stroke="#2a5be0" stroke-width="3" stroke-linecap="round"/>
+<path d="M29 82.5 Q36 79.5 43 82.5 M57 82.5 Q64 79.5 71 82.5" stroke="#9db5f5" stroke-width="2" fill="none" stroke-linecap="round"/>
+<ellipse cx="22" cy="86" rx="6" ry="7.5" fill="#4a7bf0"/><ellipse cx="78" cy="86" rx="6" ry="7.5" fill="#4a7bf0"/></g>`;
+function mascot(cls = "", book = true){
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="mascot ${cls}" viewBox="${book ? "9 15 82 83" : "10 15 80 73"}" aria-hidden="true">${OWL_DEFS}<g class="m-body">${OWL_HEAD}${OWL_FACE}${book ? OWL_BOOK : ""}</g></svg>`;
+}
+$("heroOwl").outerHTML = mascot("hop");
+$("navMascot").outerHTML = mascot("logo", false);
+$("favicon").href = "data:image/svg+xml," + encodeURIComponent(mascot("", false));
+let lastHeld = null;
+function renderOpinion(){
+  document.querySelectorAll("[data-opinion]").forEach(el => {
+    el.innerHTML = `<div class="opinion"><div><small>Your opinion</small><p>${esc(S.stance)}</p></div><button type="button" class="textbtn" data-go="1">Edit</button></div>`;
+  });
+}
+
+// ---------- step 1
+$("topic").value = S.topic; $("op").value = S.stance;
+$("f1").addEventListener("submit", e => {
+  e.preventDefault();
+  const t = $("op").value.trim().replace(/\s+/g, " ");
+  let msg = "";
+  if (!t) msg = "Write your opinion first.";
+  else if (/\?\s*$/.test(t)) msg = "Write an opinion, not a question.";
+  else if (words(t).length < 6) msg = "Add a bit more. Say what you think and why, in one sentence.";
+  else if (sentences(t).length > 1) msg = "Keep it to one sentence.";
+  $("opErr").textContent = msg; $("op").setAttribute("aria-invalid", msg ? "true" : "false");
+  if (msg){ $("op").focus(); return; }
+  S.topic = $("topic").value.trim();
+  if (t !== S.stance){
+    S.stance = t; S.stances.push({ text: t, at: now() });
+    S.chat.push({ role: "event", text: t, at: now() });
+    S.chat.push({ role: "ai", text: FALLBACK_Q[0](), at: now(), source: "opening" });
+    devSession = null;
+  }
+  save(); go(2);
+});
+function renderExplore(){
+  if (!S.explore) { $("exploreOut").innerHTML = ""; return; }
+  $("exploreOut").innerHTML = `<div class="explore-out"><strong>Questions to explore</strong>${S.explore.html}</div>`;
+}
+$("exploreBtn").addEventListener("click", async () => {
+  S.topic = $("topic").value.trim();
+  if (!S.topic){ $("opErr").textContent = "Add the essay question first, so the questions fit your topic."; $("topic").focus(); return; }
+  $("opErr").textContent = ""; $("exploreBtn").disabled = true; setThinking($("exploreOut"), "Finding angles…");
+  let html = listHTML(EXPLORE_FALLBACK);
+  try { const r = await ask("explore", [], `Essay question: "${S.topic}"`); if (guardCheck(r).ok && r.includes("?")) html = fmt(r); }
+  catch {}
+  S.explore = { topic: S.topic, html }; save(); renderExplore(); $("exploreBtn").disabled = false;
+});
+
+// ---------- AI access (Layer 1 = instructions above; Layer 2 = guardCheck)
+let devSession = null;
+const LM = { expectedInputs: [{ type: "text", languages: ["en"] }], expectedOutputs: [{ type: "text", languages: ["en"] }] };
+// Chrome built-in AI status. Capped at 3 s because availability() can hang on some setups; "available" is cached.
+let devCache = null;
+async function devState(){
+  if (devCache) return devCache;
+  if (!("LanguageModel" in self)) return (devCache = "unsupported");
+  const st = await Promise.race([LanguageModel.availability(LM).catch(() => "unsupported"), new Promise(r => setTimeout(() => r("timeout"), 3000))]);
+  if (st === "available" || st === "unavailable" || st === "unsupported") devCache = st;
+  return st === "timeout" ? "unsupported" : st;
+}
+// PROXY_URL: a small free server that holds the project's Gemini key, so nobody has to set anything up.
+// Empty until it is deployed (see worker.js). Order: Chrome's built-in AI, then the proxy, then a tester's own key.
+const PROXY_URL = "";
+async function engine(){ if (await devState() === "available") return "device"; if (PROXY_URL) return "proxy"; return cfg.key ? "key" : null; }
+async function ask(kind, history, text){
+  const eng = await engine(); if (!eng) throw new Error("NO_MODEL");
+  const system = { note: () => INSTR_NOTE(S.stance), explore: () => INSTR_EXPLORE(S.topic), next: () => INSTR_NEXT(S.topic, S.stance) }[kind]?.() || INSTR_SPAR(S.topic, S.stance);
+  if (eng === "device"){
+    if (kind !== "spar"){
+      const s = await LanguageModel.create({ ...LM, initialPrompts: [{ role: "system", content: system }] });
+      try { return await s.prompt(text); } finally { s.destroy(); }
+    }
+    if (!devSession){
+      const init = [{ role: "system", content: system }];
+      history.forEach(m => init.push({ role: m.role === "ai" ? "assistant" : "user", content: m.text }));
+      devSession = await LanguageModel.create({ ...LM, initialPrompts: init });
+    }
+    return await devSession.prompt(text);
+  }
+  const contents = history.map(m => ({ role: m.role === "ai" ? "model" : "user", parts: [{ text: m.text }] }));
+  contents.push({ role: "user", parts: [{ text }] });
+  const res = eng === "proxy"
+    ? await fetch(PROXY_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ system, contents }) })
+    : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent`, {
+    method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": cfg.key },
+    body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents })
+  });
+  if (!res.ok){ const j = await res.json().catch(() => ({})); throw new Error(j.error?.message || `error ${res.status}`); }
+  const j = await res.json();
+  const out = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("").trim();
+  if (!out) throw new Error("the AI sent an empty reply");
+  return out;
+}
+
+// ---------- step 2
+let heldN = 0;
+function renderChat(){
+  $("chat").innerHTML = S.chat.map(m => {
+    if (m.role === "event") return "";
+    if (m.role === "user") return `<li class="bubble from-you"><span class="who">You</span>${esc(m.text)}</li>`;
+    const note = m.held ? `<li class="hidden-note">The AI tried to write text for you, so it was hidden. Here's a question instead.</li>` : "";
+    return note + `<li class="ai-row">${mascot(m === lastHeld ? "no" : "", false)}<div class="bubble from-ai"><span class="who">AI</span>${fmt(m.text)}</div></li>`;
+  }).join("");
+  lastHeld = null;
+  engine().then(async eng => {
+    $("noAi").hidden = !!eng; $("f2").hidden = !eng; $("stuck2").hidden = !eng;
+    if (eng) return;
+    const st = await devState(), can = st === "downloadable" || st === "downloading";
+    $("devBtn").hidden = !can;
+    $("noAiTitle").textContent = can ? "Turn on the AI to start" : "The AI isn't ready on this computer";
+    $("noAiText").textContent = can ? "Chrome has a free built-in AI. It downloads once, then works offline." : "You can still write your essay without it.";
+  });
+}
+function setThinking(el, msg){ el.innerHTML = msg ? mascot("think", false) + `<span>${esc(msg)}</span>` : ""; }
+$("devBtn").addEventListener("click", async () => {
+  $("devProg").hidden = false; $("devBtn").disabled = true;
+  try { const s = await LanguageModel.create({ ...LM, monitor(m){ m.addEventListener("downloadprogress", e => { $("devProg").value = e.loaded; }); } }); s.destroy(); }
+  catch (err){ $("noAiText").textContent = "The download didn't finish. Try again, or skip to writing."; }
+  devCache = null; $("devBtn").disabled = false; $("devProg").hidden = true; renderChat();
+});
+$("f2").addEventListener("submit", async e => {
+  e.preventDefault();
+  const t = $("ans").value.trim();
+  if (!t){ $("ansErr").textContent = "Type a reply first."; return; }
+  $("ansErr").textContent = ""; $("send").disabled = true; setThinking($("thinking"), "Thinking…");
+  const history = S.chat.filter(m => m.role === "user" || (m.role === "ai" && !m.held));
+  S.chat.push({ role: "user", text: t, at: now() }); $("ans").value = ""; save(); renderChat();
+  try {
+    const reply = await ask("spar", history, t);
+    const g = guardCheck(reply);
+    const m = g.ok ? { role: "ai", text: reply.trim(), at: now() }
+      : { role: "ai", held: true, reasons: g.reasons, text: FALLBACK_Q[1 + (heldN++ % 4)](), at: now() };
+    S.chat.push(m); if (m.held){ lastHeld = m; devSession = null; }
+  } catch (err){
+    $("ansErr").textContent = err.message === "NO_MODEL" ? "The AI isn't ready on this computer." : `The AI didn't answer (${err.message}). Your reply is saved. Try sending again.`;
+    devSession = null;
+  }
+  setThinking($("thinking"), ""); save(); renderChat(); $("send").disabled = false; $("ans").focus();
+  $("chat").lastElementChild?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+$("stuck2").addEventListener("click", () => { $("ans").value = "I'm stuck. What could I think about?"; $("f2").requestSubmit(); });
+$("ans").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); $("f2").requestSubmit(); } });
+
+// ---------- step 3: editor + "written by you" meter
+// prov keeps one mark per character: t = typed here, p = pasted or dropped in (undo/redo counts as p so it never inflates the share)
+const ed = $("draft"); let kind = "t";
+ed.addEventListener("beforeinput", e => { kind = /^(insertFromPaste|insertFromDrop|insertFromPasteAsQuotation|historyUndo|historyRedo)$/.test(e.inputType) ? "p" : "t"; });
+ed.addEventListener("input", () => {
+  const o = S.draft, n = ed.value; let a = 0, b = 0;
+  while (a < o.length && a < n.length && o[a] === n[a]) a++;
+  while (b < o.length - a && b < n.length - a && o[o.length - 1 - b] === n[n.length - 1 - b]) b++;
+  S.prov = S.prov.slice(0, a) + kind.repeat(n.length - a - b) + S.prov.slice(o.length - b);
+  S.draft = n; kind = "t"; save(); meter();
+});
+function share(){ let t = 0, all = 0; for (let i = 0; i < S.draft.length; i++){ if (/\s/.test(S.draft[i])) continue; all++; if (S.prov[i] !== "p") t++; } return all ? t / all : null; }
+function meter(){
+  const s = share(), w = words(S.draft).length;
+  $("wc").textContent = `${w} word${w === 1 ? "" : "s"}`;
+  if (s === null){ $("pct").textContent = "–"; $("fill").style.width = "0"; $("bar").setAttribute("aria-label", "Written by you: no text yet"); return; }
+  const p = Math.round(s * 100);
+  $("pct").textContent = p + "%"; $("fill").style.width = p + "%"; $("bar").setAttribute("aria-label", `Written by you: ${p} percent`);
+}
+function renderDraft(){ if (ed.value !== S.draft) ed.value = S.draft; meter(); renderFb(); selState(); renderNotes(); }
+// notes = the student's own step-2 answers, paired with the question they answered
+function pairs(){
+  const out = []; let q = "";
+  // skip "I'm stuck" and any message whose reply was hidden (a request for the AI to write)
+  S.chat.forEach((m, i) => {
+    if (m.role === "ai") q = m.text;
+    else if (m.role === "user" && !/^I'm stuck/.test(m.text) && !S.chat.slice(i + 1).find(x => x.role === "ai")?.held) out.push({ q, a: m.text });
+  });
+  return out;
+}
+function renderNotes(){
+  const p = pairs();
+  $("nCount").textContent = p.length;
+  $("nlist").innerHTML = p.length ? p.map((n, i) => `<div class="note">${n.q ? `<p class="q">${esc(n.q)}</p>` : ""}<p>${esc(n.a)}</p><button type="button" class="textbtn" data-note="${i}">Add to essay</button></div>`).join("")
+    : `<p class="notes-empty">Nothing yet. Your answers from step 2 will show up here.</p>`;
+}
+$("nlist").addEventListener("click", e => {
+  const b = e.target.closest("[data-note]"); if (!b) return;
+  const text = pairs()[+b.dataset.note].a;
+  const at = ed.selectionEnd ?? S.draft.length, before = S.draft.slice(0, at), after = S.draft.slice(at);
+  const ins = (before && !/\s$/.test(before) ? " " : "") + text + (after && !/^\s/.test(after) ? " " : "");
+  // the student's own words, so they count as written by them
+  S.draft = before + ins + after; S.prov = S.prov.slice(0, at) + "t".repeat(ins.length) + S.prov.slice(at);
+  ed.value = S.draft; ed.focus(); ed.setSelectionRange(at + ins.length, at + ins.length); save(); meter(); selState();
+});
+const sel = () => ed.value.slice(ed.selectionStart, ed.selectionEnd).trim();
+function selState(){
+  const ok = words(sel()).length >= 4; $("askFb").disabled = !ok;
+  $("fbHint").textContent = ok ? "Ready. The AI will comment on the highlighted part." : "Highlight a sentence you wrote to get feedback on it.";
+}
+["select", "keyup", "mouseup", "input"].forEach(ev => ed.addEventListener(ev, selState));
+document.addEventListener("selectionchange", () => { if (document.activeElement === ed) selState(); });
+function renderFb(){
+  $("fbWrap").hidden = !S.notes.length;
+  $("fbList").innerHTML = S.notes.slice().reverse().map(n => n.hint
+    ? `<div class="fb hint"><span class="label">Ideas for what to write next</span>${n.html}</div>`
+    : n.held
+    ? `<div class="fb hid"><q>${esc(n.sel)}</q>The AI tried to rewrite your sentence, so it was hidden. Ask yourself: ${esc(n.text)}</div>`
+    : `<div class="fb"><q>${esc(n.sel)}</q>${fmt(n.text)}</div>`).join("");
+}
+$("askFb").addEventListener("click", async () => {
+  const s = sel(); if (words(s).length < 4) return;
+  $("askFb").disabled = true; setThinking($("fbThinking"), "Reading your sentence…");
+  try {
+    const reply = await ask("note", [], `Comment on these sentences I wrote:\n"${s}"`);
+    const g = guardCheck(reply, { studentText: S.draft });
+    S.notes.push(g.ok ? { sel: s, text: reply.trim(), at: now() } : { sel: s, held: true, reasons: g.reasons, text: "What exactly should this sentence prove, and does it say that yet?", at: now() });
+    setThinking($("fbThinking"), "");
+  } catch (err){
+    setThinking($("fbThinking"), "");
+    $("fbThinking").textContent = err.message === "NO_MODEL" ? "The AI isn't ready on this computer, so feedback is off." : `The AI didn't answer (${err.message}). Try again.`;
+  }
+  save(); renderFb(); selState();
+});
+$("stuck3").addEventListener("click", async () => {
+  $("stuck3").disabled = true; setThinking($("fbThinking"), "Looking at your essay…");
+  let html = listHTML(NEXT_FALLBACK);
+  try {
+    const r = await ask("next", [], `My essay so far:\n"""\n${S.draft || "(nothing yet)"}\n"""`);
+    if (guardCheck(r, { studentText: S.draft }).ok && r.includes("?")) html = fmt(r);
+  } catch {}
+  S.notes.push({ hint: true, html, at: now() }); setThinking($("fbThinking"), ""); save(); renderFb(); $("stuck3").disabled = false;
+  $("fbWrap").scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
+$("restart").addEventListener("click", () => {
+  if (!confirm("Start a new essay? This clears your opinion, chat and essay on this computer.")) return;
+  try { localStorage.removeItem(KEY); } catch {}
+  location.reload();
+});
+function saveFile(name, text, type){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$("download").addEventListener("click", () => {
+  const s = share(), day = new Date().toISOString().slice(0, 10);
+  const lines = [`My essay (${day})`, "", S.topic ? `Question: ${S.topic}` : null, `My opinion: ${S.stance}`, "", S.draft || "(no essay yet)", "",
+    `${words(S.draft).length} words. Written by me: ${s === null ? "-" : Math.round(s * 100) + "%"}`].filter(l => l !== null);
+  saveFile(`my-essay-${day}.txt`, lines.join("\n"), "text/plain");
+});
+$("recordBtn").addEventListener("click", () => {
+  const s = share();
+  const rec = { exported: now(), topic: S.topic, opinions: S.stances, conversation: S.chat, essay: S.draft, words: words(S.draft).length, writtenByYou: s === null ? null : +s.toFixed(3), feedback: S.notes, guard: GUARD };
+  saveFile(`think-first-record-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(rec, null, 2), "application/json");
+});
+
+// ---------- research tools (footer link)
+const rd = $("research");
+async function aiStatus(){
+  const eng = await engine(), st = await devState();
+  $("aiStatus").textContent = { device: "Using Chrome's built-in AI.", proxy: "Using the project server.", key: "Using the saved test key." }[eng] || `No AI available (Chrome built-in AI: ${st}).`;
+}
+$("resLink").addEventListener("click", e => { e.preventDefault(); $("keyIn").value = cfg.key; aiStatus(); rd.showModal(); });
+$("saveKey").addEventListener("click", () => {
+  cfg.key = $("keyIn").value.trim(); store.set(CFG, cfg); devSession = null; aiStatus();
+  if (S.step === 2) renderChat();
+});
+$("closeRes").addEventListener("click", () => rd.close());
+$("thr").textContent = `Hidden if: ${GUARD.maxDeclRun}+ statements in a row (${GUARD.maxDeclRunWords}+ words), a ${GUARD.maxParaWords}+ word paragraph with no question, ${GUARD.maxFullBullets}+ full-sentence bullets, or essay headings. As feedback, also: ${GUARD.maxQuoteWords}+ quoted words not from the essay, or a near-copy of a student sentence.`;
+$("rRun").addEventListener("click", () => {
+  const g = guardCheck($("rIn").value, $("rStep3").checked ? { studentText: S.draft } : {});
+  $("rOut").innerHTML = `<div class="verdict ${g.ok ? "" : "no"}" role="status">${g.ok ? "Shown to the student." : "Hidden. Reason: " + esc(g.reasons.join("; "))}</div>`;
+});
+$("copyInstr").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(INSTR_SPAR(S.topic, S.stance || "[student opinion]")); $("copyMsg").textContent = "Copied."; }
+  catch { $("copyMsg").textContent = "Your browser blocked copying."; }
+});
+
+renderExplore();
+go(S.step || 1);
+</script>
+</body>
+</html>
