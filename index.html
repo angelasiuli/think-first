@@ -48,7 +48,7 @@ button:disabled{cursor:not-allowed}
 .textbtn:hover{text-decoration:underline}
 
 .hero{display:flex;flex-direction:column;align-items:center;gap:16px;padding:48px 0 40px;text-align:center}
-.hero .mascot{order:-1;width:88px;height:auto;aspect-ratio:82/83}
+.hero .mascot{order:-1;width:88px;height:89px}
 .hero h1{font-size:42px;line-height:1.12;letter-spacing:-.025em;margin:0 auto 14px;max-width:16em;font-weight:700}
 .hero p{font-size:18px;color:var(--text-2);margin:0 auto;max-width:34em}
 
@@ -140,12 +140,12 @@ progress{width:100%;margin-top:8px}
 .verdict.no{background:var(--amber-soft);color:var(--amber)}
 
 /* The owl moves only on events: hop on load, bob while thinking, shake when a reply is hidden, blink on hover. */
-.mascot{display:block;overflow:visible;width:32px;height:auto}
+.mascot{display:block;overflow:visible;width:32px;height:29px;max-width:96px;max-height:96px}
 .mascot .m-body,.mascot .m-eyes{transform-box:fill-box}
 .mascot .m-body{transform-origin:50% 100%}
 .mascot .m-eyes{transform-origin:center}
 .mascot .m-pupils{transition:transform .3s ease}
-.logo{width:26px;height:auto;aspect-ratio:80/73}
+.logo{width:26px;height:24px}
 .mascot.hop .m-body{animation:hop .7s cubic-bezier(.3,1.5,.5,1) .3s 1 both}
 .mascot.hop .m-eyes{animation:blink .3s ease 1.3s 1}
 .mascot.think .m-body{animation:bob 1.2s ease-in-out infinite}
@@ -157,10 +157,10 @@ progress{width:100%;margin-top:8px}
 @keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}55%{transform:rotate(7deg)}80%{transform:rotate(-3deg)}}
 @keyframes blink{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.1)}}
 .ai-row{display:flex;gap:10px;align-items:flex-start;max-width:90%}
-.ai-row .mascot{width:30px;height:auto;aspect-ratio:80/73;flex:none;margin-top:2px}
+.ai-row .mascot{width:30px;height:27px;flex:none;margin-top:2px}
 .ai-row .bubble{max-width:none}
 .think-row{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
-.think-row .mascot{width:26px;flex:none}
+.think-row .mascot{width:26px;height:24px;flex:none}
 
 .explore{margin:-4px 0 18px}
 .explore-out{margin-top:10px;background:var(--blue-soft);border-radius:var(--radius);padding:12px 14px;font-size:15px}
@@ -186,7 +186,7 @@ progress{width:100%;margin-top:8px}
 
 @media (max-width:640px){
   .hero{padding:28px 0 32px;gap:12px}
-  .hero .mascot{width:76px}
+  .hero .mascot{width:76px;height:77px}
   .hero h1{font-size:30px}
   .hero p{font-size:16px}
   .top nav a.hide-sm{display:none}
@@ -504,7 +504,7 @@ const OWL_BOOK = `<g class="m-book"><path d="M22 80 Q36 73 50 79 Q64 73 78 80 L7
 <path d="M29 82.5 Q36 79.5 43 82.5 M57 82.5 Q64 79.5 71 82.5" stroke="#9db5f5" stroke-width="2" fill="none" stroke-linecap="round"/>
 <ellipse cx="22" cy="86" rx="6" ry="7.5" fill="#4a7bf0"/><ellipse cx="78" cy="86" rx="6" ry="7.5" fill="#4a7bf0"/></g>`;
 function mascot(cls = "", book = true){
-  return `<svg xmlns="http://www.w3.org/2000/svg" class="mascot ${cls}" viewBox="${book ? "9 15 82 83" : "10 15 80 73"}" aria-hidden="true">${OWL_DEFS}<g class="m-body">${OWL_HEAD}${OWL_FACE}${book ? OWL_BOOK : ""}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="29" class="mascot ${cls}" viewBox="${book ? "9 15 82 83" : "10 15 80 73"}" aria-hidden="true">${OWL_DEFS}<g class="m-body">${OWL_HEAD}${OWL_FACE}${book ? OWL_BOOK : ""}</g></svg>`;
 }
 $("heroOwl").outerHTML = mascot("hop");
 $("navMascot").outerHTML = mascot("logo", false);
