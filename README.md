@@ -83,8 +83,7 @@ Runs 15 cases against the code check: replies that should be shown and replies t
 
 ## Status and limits
 
-- This is a **research prototype**. It has not been tested with real students yet.
-- The code check is a set of simple rules. It will miss some essay-like replies and may hide some good ones.
+- This is a **research prototype**. 
 - A student who wants an essay can still open another AI tool. Think First is for students who choose to use it.
 - On the free Gemini tier, Google may use submitted text to improve its products, so students should not type private information. Writing is stored only in the student's own browser, and the Worker does not keep messages.
 - The free tier has daily limits, so it suits demos and classes, not thousands of users.
