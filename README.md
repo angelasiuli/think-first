@@ -1,6 +1,6 @@
 # Think First
 
-An AI writing partner that helps students think, not write for them. Research prototype for a GSLS 2026 technical report.
+An AI writing partner that helps students think, not write for them. Research prototype.
 
 1. **Your opinion**: the student writes a one-sentence position before the AI argues.
 2. **Get challenged**: the AI asks questions and raises the other side.
