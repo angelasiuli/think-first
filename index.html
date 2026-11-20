@@ -586,7 +586,7 @@ async function devState(){
 }
 // PROXY_URL: a small free server that holds the project's Gemini key, so nobody has to set anything up.
 // Empty until it is deployed (see worker.js). Order: Chrome's built-in AI, then the proxy, then a tester's own key.
-const PROXY_URL = "";
+const PROXY_URL = "https://think-first.angelsdxls.workers.dev";
 async function engine(){ if (await devState() === "available") return "device"; if (PROXY_URL) return "proxy"; return cfg.key ? "key" : null; }
 async function ask(kind, history, text){
   const eng = await engine(); if (!eng) throw new Error("NO_MODEL");
