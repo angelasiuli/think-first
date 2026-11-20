@@ -1,6 +1,5 @@
-// Cloudflare Worker (free plan) that lets the website use Gemini without anyone entering a key.
-// The Gemini key is a Cloudflare secret (GEMINI_KEY), never in the website code.
-// ALLOWED_ORIGIN, MODEL and FALLBACK_MODEL are set in wrangler.toml.
+// Forwards chat requests to Gemini so users need no key. GEMINI_KEY is a Cloudflare secret.
+// ALLOWED_ORIGIN, MODEL and FALLBACK_MODEL live in wrangler.toml.
 const BUSY = new Set([429, 500, 503]);
 export default {
   async fetch(req, env) {
@@ -16,7 +15,7 @@ export default {
     const payload = JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { maxOutputTokens: 2048 } });
     const call = model => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_KEY }, body: payload });
-    // Busy model: try again once, then fall back to the second model.
+    // On a busy model, retry once, then use the fallback.
     let r = await call(env.MODEL);
     if (BUSY.has(r.status)) { await new Promise(s => setTimeout(s, 800)); r = await call(env.MODEL); }
     if (BUSY.has(r.status) && env.FALLBACK_MODEL) r = await call(env.FALLBACK_MODEL);

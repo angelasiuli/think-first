@@ -11,13 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!--
-Design notes:
-- White and one blue. The tool is for students mid-assignment; it should feel calm and familiar, like a good writing app.
-  Blue marks the one thing to do next (primary button, current step). Amber appears only when the AI's reply was hidden.
-- Inter for legibility in a UI with many small labels.
-- Copy is short and plain: a student should understand each screen without reading a paragraph.
--->
+<!-- Blue marks the next action and the current step; amber appears only when an AI reply was hidden. -->
 <style>
 :root{
   --bg:#ffffff; --soft:#f6f7f9; --line:#e4e7ec; --text:#101828; --text-2:#475467; --muted:#667085;
@@ -34,7 +28,6 @@ button:disabled{cursor:not-allowed}
 .wrap{max-width:880px;margin:0 auto;padding:0 16px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* top bar */
 .top{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:10}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;min-height:60px;gap:12px}
 .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:18px;letter-spacing:-.01em;color:var(--text);text-decoration:none}
@@ -42,7 +35,6 @@ button:disabled{cursor:not-allowed}
 .top nav a{color:var(--text-2);text-decoration:none;font-size:15px;padding:8px 10px;border-radius:8px}
 .top nav a:hover{background:var(--soft);color:var(--text)}
 
-/* buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:8px;font-weight:600;font-size:15px;border:1px solid transparent;text-decoration:none}
 .btn-primary{background:var(--blue);color:#fff}
 .btn-primary:hover{background:var(--blue-hover)}
@@ -55,13 +47,11 @@ button:disabled{cursor:not-allowed}
 .textbtn{background:none;border:0;padding:0;color:var(--blue);font-weight:500;font-size:14px}
 .textbtn:hover{text-decoration:underline}
 
-/* hero */
 .hero{display:flex;flex-direction:column;align-items:center;gap:16px;padding:48px 0 40px;text-align:center}
 .hero .mascot{order:-1;width:88px;height:auto;aspect-ratio:82/83}
 .hero h1{font-size:42px;line-height:1.12;letter-spacing:-.025em;margin:0 auto 14px;max-width:16em;font-weight:700}
 .hero p{font-size:18px;color:var(--text-2);margin:0 auto;max-width:34em}
 
-/* app card */
 .app{scroll-margin-top:72px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.05);margin-bottom:72px;position:relative}
 .steps{border-radius:14px 14px 0 0;display:flex;border-bottom:1px solid var(--line);background:var(--soft);margin:0;padding:0;list-style:none}
 .steps li{flex:1}
@@ -93,7 +83,6 @@ textarea{resize:vertical}
 .opinion small{display:block;font-size:12px;font-weight:600;color:var(--blue);margin-bottom:2px}
 .opinion p{margin:0;font-weight:500}
 
-/* chat */
 .chat{display:flex;flex-direction:column;gap:12px;margin:0 0 16px;padding:0;list-style:none}
 .bubble{max-width:85%;padding:10px 14px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere}
 .from-ai{align-self:flex-start;background:var(--soft);border-top-left-radius:4px}
@@ -108,7 +97,6 @@ textarea{resize:vertical}
 .box strong{display:block;margin-bottom:4px}
 .box p{margin:0 0 12px;color:var(--text-2);font-size:15px}
 
-/* editor */
 .editor{border:1px solid #d0d5dd;border-radius:var(--radius);overflow:hidden}
 .editor:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px #dbe5ff}
 #draft{border:0;border-radius:0;min-height:300px;padding:16px;font-size:17px;line-height:1.7;box-shadow:none}
@@ -121,7 +109,6 @@ textarea{resize:vertical}
 .fb q{display:block;color:var(--muted);font-size:14px;margin-bottom:6px;quotes:"“" "”"}
 .fb.hid{border-color:var(--amber-line);background:var(--amber-soft);color:var(--amber)}
 
-/* how it works + faq */
 section.info{padding:0 0 64px}
 section.info h2{font-size:26px;letter-spacing:-.015em;margin:0 0 20px}
 .how{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:0;padding:0;list-style:none}
@@ -140,7 +127,6 @@ section.info h2{font-size:26px;letter-spacing:-.015em;margin:0 0 20px}
 footer{border-top:1px solid var(--line);padding:24px 0 40px;font-size:14px;color:var(--muted)}
 footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 
-/* dialogs */
 dialog{border:0;border-radius:14px;padding:24px;max-width:520px;width:calc(100% - 32px);box-shadow:0 20px 50px rgba(16,24,40,.25)}
 dialog::backdrop{background:rgba(16,24,40,.45)}
 dialog h2{margin:0 0 4px;font-size:20px}
@@ -153,9 +139,7 @@ progress{width:100%;margin-top:8px}
 .verdict{margin-top:10px;padding:10px 12px;border-radius:8px;background:#ecfdf3;color:#067647;font-size:14px}
 .verdict.no{background:var(--amber-soft);color:var(--amber)}
 
-/* mascot: a blue owl reading a book. It moves only when something happens:
-   hops once on arrival, looks down at its book and bobs while the AI is thinking,
-   shakes its head when a reply is hidden, blinks on hover. */
+/* The owl moves only on events: hop on load, bob while thinking, shake when a reply is hidden, blink on hover. */
 .mascot{display:block;overflow:visible}
 .mascot .m-body,.mascot .m-eyes{transform-box:fill-box}
 .mascot .m-body{transform-origin:50% 100%}
@@ -243,7 +227,6 @@ progress{width:100%;margin-top:8px}
         <li><button type="button" data-go="3" disabled><span class="num">3</span>Write</button></li>
       </ol>
 
-      <!-- Step 1 -->
       <div class="pane" id="p1">
         <h2>What do you think?</h2>
         <p class="sub">Write your opinion in one sentence. It has to come from you, so the AI won't give you one.</p>
@@ -268,7 +251,6 @@ progress{width:100%;margin-top:8px}
         </form>
       </div>
 
-      <!-- Step 2 -->
       <div class="pane" id="p2" hidden>
         <h2>Defend your opinion</h2>
         <p class="sub">The AI asks questions and argues back. Answer in your own words.</p>
@@ -293,7 +275,6 @@ progress{width:100%;margin-top:8px}
         <div class="row-between"><button type="button" class="btn btn-line" id="stuck2">I'm stuck</button><button type="button" class="btn btn-line" data-go="3">I'm ready to write</button></div>
       </div>
 
-      <!-- Step 3 -->
       <div class="pane" id="p3" hidden>
         <h2>Write your essay</h2>
         <p class="sub">Only you can type here. Start from the ideas you already gave in step 2.</p>
@@ -381,7 +362,7 @@ progress{width:100%;margin-top:8px}
 </dialog>
 
 <script>
-// GUARD-START  (Layer 2: deterministic check, independent of the model. Also loaded by guard_test.mjs)
+// GUARD-START (Layer 2: code check independent of the model; guard_test.mjs loads this block)
 const GUARD = {
   maxDeclRun: 4,        // this many declarative sentences in a row ...
   maxDeclRunWords: 40,  // ... totalling at least this many words, is held back
@@ -494,7 +475,6 @@ function fmt(text){
 }
 const listHTML = arr => `<ul class="ai-list">${arr.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`;
 
-// ---------- steps
 function go(n){
   n = +n; if (n > 1 && !S.stance) n = 1;
   S.step = n; save();
@@ -513,8 +493,7 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-go]"); if (b && !b.disabled){ go(b.dataset.go); document.querySelector(".app").scrollIntoView({ block: "start" }); }
 });
 
-// ---------- mascot: a flat blue owl reading a book. One blue (soft gradient) plus white, rounded shapes.
-// mascot(cls, book): book=false gives the head only (logo and chat avatar).
+// book=false draws the head only (logo, chat avatar).
 const OWL_DEFS = `<defs><linearGradient id="owlG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d48c8"/><stop offset="1" stop-color="#4a7bf0"/></linearGradient></defs>`;
 const OWL_HEAD = `<path d="M21 44 L15.5 21 Q14.5 16.5 19 18.5 L37 28 Q50 24.5 63 28 L81 18.5 Q85.5 16.5 84.5 21 L79 44 Q88 54 87 66 Q84 86 50 86 Q16 86 13 66 Q12 54 21 44 Z" fill="url(#owlG)"/>`;
 const OWL_FACE = `<g class="m-eyes"><circle cx="36" cy="52" r="12.5" fill="#fff"/><circle cx="64" cy="52" r="12.5" fill="#fff"/>
@@ -537,7 +516,6 @@ function renderOpinion(){
   });
 }
 
-// ---------- step 1
 $("topic").value = S.topic; $("op").value = S.stance;
 $("f1").addEventListener("submit", e => {
   e.preventDefault();
@@ -572,10 +550,10 @@ $("exploreBtn").addEventListener("click", async () => {
   S.explore = { topic: S.topic, html }; save(); renderExplore(); $("exploreBtn").disabled = false;
 });
 
-// ---------- AI access (Layer 1 = instructions above; Layer 2 = guardCheck)
+// Layer 1 is the instructions above; Layer 2 is guardCheck.
 let devSession = null;
 const LM = { expectedInputs: [{ type: "text", languages: ["en"] }], expectedOutputs: [{ type: "text", languages: ["en"] }] };
-// Chrome built-in AI status. Capped at 3 s because availability() can hang on some setups; "available" is cached.
+// availability() can hang on some setups, so cap it at 3 s and cache "available".
 let devCache = null;
 async function devState(){
   if (devCache) return devCache;
@@ -584,8 +562,7 @@ async function devState(){
   if (st === "available" || st === "unavailable" || st === "unsupported") devCache = st;
   return st === "timeout" ? "unsupported" : st;
 }
-// PROXY_URL: a small free server that holds the project's Gemini key, so nobody has to set anything up.
-// Empty until it is deployed (see worker.js). Order: Chrome's built-in AI, then the proxy, then a tester's own key.
+// Cloudflare Worker that holds the Gemini key (worker.js). Order: built-in AI, Worker, tester's own key.
 const PROXY_URL = "https://think-first.angelsdxls.workers.dev";
 async function engine(){ if (await devState() === "available") return "device"; if (PROXY_URL) return "proxy"; return cfg.key ? "key" : null; }
 async function ask(kind, history, text){
@@ -618,7 +595,6 @@ async function ask(kind, history, text){
   return out;
 }
 
-// ---------- step 2
 let heldN = 0;
 function renderChat(){
   $("chat").innerHTML = S.chat.map(m => {
@@ -667,7 +643,6 @@ $("f2").addEventListener("submit", async e => {
 $("stuck2").addEventListener("click", () => { $("ans").value = "I'm stuck. What could I think about?"; $("f2").requestSubmit(); });
 $("ans").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); $("f2").requestSubmit(); } });
 
-// ---------- step 3: editor + "written by you" meter
 // prov keeps one mark per character: t = typed here, p = pasted or dropped in (undo/redo counts as p so it never inflates the share)
 const ed = $("draft"); let kind = "t";
 ed.addEventListener("beforeinput", e => { kind = /^(insertFromPaste|insertFromDrop|insertFromPasteAsQuotation|historyUndo|historyRedo)$/.test(e.inputType) ? "p" : "t"; });
@@ -773,7 +748,6 @@ $("recordBtn").addEventListener("click", () => {
   saveFile(`think-first-record-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(rec, null, 2), "application/json");
 });
 
-// ---------- research tools (footer link)
 const rd = $("research");
 async function aiStatus(){
   const eng = await engine(), st = await devState();
