@@ -140,7 +140,7 @@ progress{width:100%;margin-top:8px}
 .verdict.no{background:var(--amber-soft);color:var(--amber)}
 
 /* The owl moves only on events: hop on load, bob while thinking, shake when a reply is hidden, blink on hover. */
-.mascot{display:block;overflow:visible}
+.mascot{display:block;overflow:visible;width:32px;height:auto}
 .mascot .m-body,.mascot .m-eyes{transform-box:fill-box}
 .mascot .m-body{transform-origin:50% 100%}
 .mascot .m-eyes{transform-origin:center}
@@ -159,8 +159,8 @@ progress{width:100%;margin-top:8px}
 .ai-row{display:flex;gap:10px;align-items:flex-start;max-width:90%}
 .ai-row .mascot{width:30px;height:auto;aspect-ratio:80/73;flex:none;margin-top:2px}
 .ai-row .bubble{max-width:none}
-.thinking{display:flex;align-items:center;gap:8px}
-.thinking .mascot{width:26px;height:auto;aspect-ratio:80/73}
+.think-row{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.think-row .mascot{width:26px;flex:none}
 
 .explore{margin:-4px 0 18px}
 .explore-out{margin-top:10px;background:var(--blue-soft);border-radius:var(--radius);padding:12px 14px;font-size:15px}
@@ -613,7 +613,7 @@ function renderChat(){
     $("noAiText").textContent = can ? "Chrome has a free built-in AI. It downloads once, then works offline." : "You can still write your essay without it.";
   });
 }
-function setThinking(el, msg){ el.innerHTML = msg ? mascot("think", false) + `<span>${esc(msg)}</span>` : ""; }
+function setThinking(el, msg){ el.innerHTML = msg ? `<span class="think-row">${mascot("think", false)}<span>${esc(msg)}</span></span>` : ""; }
 $("devBtn").addEventListener("click", async () => {
   $("devProg").hidden = false; $("devBtn").disabled = true;
   try { const s = await LanguageModel.create({ ...LM, monitor(m){ m.addEventListener("downloadprogress", e => { $("devProg").value = e.loaded; }); } }); s.destroy(); }
